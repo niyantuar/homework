@@ -16,6 +16,7 @@ int main(int argc, char** argv) {
         if (pid == 0) {  // child
             char* passed_arguments[] {arg, nullptr};
             execvp(arg, passed_arguments);
+            return 127;
         } else {  // parent
             int status;
             waitpid(pid, &status, 0);
