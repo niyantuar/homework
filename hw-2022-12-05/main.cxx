@@ -47,8 +47,6 @@ int main(int argc, char** argv) {
                 std::cout << "shat vata fork" << std::endl;
                 return -1;  // doesn't kill children
             }
-
-            close(pipes[i][1]);
         }
         if (child_pid == 0) {
             close(pipes[i][0]);
