@@ -30,6 +30,7 @@ int main(int argc, char** argv) {
 
     pid_t child_pid = -1;
     std::vector<std::array<int, 2>> pipes(M, std::array<int, 2>{-1, -1});
+    std::vector<std::array<int, 2>> index_transporting_pipes(M, std::array<int, 2>{-1, -1});
 
     const std::size_t step = std::ceil(static_cast<double>(N) / M);
     
@@ -42,6 +43,14 @@ int main(int argc, char** argv) {
             }
             pipes[i] = {current_pipe[0], current_pipe[1]};
 
+            if (pipe(current_pipe) == -1) {
+                std::cout << "shat vata pipe" << std::endl;
+                return -1;  // shat vata
+            }
+            index_transporting_pipes[i] = {current_pipe[0], current_pipe[1]};
+	   std::pair<std::size_t, std::size_t> begin_end{step*i, step*(i+1)};
+	   write(index_transporting_pipes[i][1], &begin_end, sizeof(begin_end));
+
             child_pid = fork();
             if (child_pid == -1) {
                 std::cout << "shat vata fork" << std::endl;
@@ -50,9 +59,12 @@ int main(int argc, char** argv) {
         }
         if (child_pid == 0) {
             close(pipes[i][0]);
+	   close(index_transporting_pipes[i][1]);
+	   std::pair<std::size_t, std::size_t> begin_end{-1, -1};
+	   read(index_transporting_pipes[i][0], &begin_end, sizeof(begin_end));
             int restricted_sum = std::accumulate(
-                random_numbers.begin() + step * i,
-                std::min(random_numbers.begin() + step * (i + 1), random_numbers.end()),
+                random_numbers.begin() + begin_end.first,
+                std::min(random_numbers.begin() + begin_end.second, random_numbers.end()),
                 0
             );
             std::cout << restricted_sum << std::endl;
@@ -70,5 +82,5 @@ int main(int argc, char** argv) {
         res += restricted_sum;
         close(in);
     }
-    std::cout << res << std::endl;
+    std::cout << std::endl << res << std::endl;
 }
