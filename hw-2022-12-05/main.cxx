@@ -7,6 +7,7 @@
 #include <ctime>
 #include <numeric>
 #include <cmath>
+#include <algorithm>
 #include <unistd.h>
 #include <sys/wait.h>
 
@@ -17,7 +18,7 @@ int main(int argc, char** argv) {
         return 1;
     }
     std::size_t N = std::atoi(argv[1]);
-    std::size_t M = std::atoi(argv[2]);
+    std::size_t M = std::min(std::atoi(argv[2]), N);
 
     std::vector<int> random_numbers(N);
     std::srand(std::time(nullptr));
