@@ -18,7 +18,10 @@ int main(int argc, char** argv) {
         return 1;
     }
     std::size_t N = std::atoi(argv[1]);
-    std::size_t M = std::min(std::atoi(argv[2]), N);
+    std::size_t M = std::min(
+        static_cast<std::size_t>(std::atoi(argv[2])),
+        N
+    );
 
     std::vector<int> random_numbers(N);
     std::srand(std::time(nullptr));
