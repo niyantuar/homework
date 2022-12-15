@@ -1,0 +1,3 @@
+mutex: 839 milliseconds
+semaphore: 1497 milliseconds
+mutex: 20934 milliseconds
