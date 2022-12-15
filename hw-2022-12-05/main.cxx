@@ -1,90 +1,65 @@
 #include <iostream>
-#include <cstring>
+#include <tuple>
+#include <unordered_map>
+#include <functional>
 #include <cstddef>
+#include <pthread.h>
 #include <vector>
-#include <array>
-#include <cstdlib>
-#include <ctime>
-#include <numeric>
-#include <cmath>
 #include <algorithm>
-#include <unistd.h>
-#include <sys/wait.h>
 
+std::unordered_map<std::string, std::function<int(int, int)>> functions{
+  {"s", std::plus<int>()},
+  {"m", std::multiplies<int>()},
+  {"ss", [](int left, int right){return left*left + right*right;}}
+};
 
-int main(int argc, char** argv) {
-    if (argc < 3) {
-        std::cout << "shat vata" << std::endl;
-        return 1;
-    }
-    std::size_t N = std::atoi(argv[1]);
-    std::size_t M = std::min(
-        static_cast<std::size_t>(std::atoi(argv[2])),
-        N
-    );
+struct args_t {
+  int left;
+  int right;
+  std::string function;
+};
 
-    std::vector<int> random_numbers(N);
-    std::srand(std::time(nullptr));
-    for (auto& el : random_numbers) {
-        el = std::rand() % 10;  // vor shat gesh tver chlinen
-        std::cout << el << ' ';
-    }
-    std::cout << std::endl;
-
-
-    pid_t child_pid = -1;
-    std::vector<std::array<int, 2>> pipes(M, std::array<int, 2>{-1, -1});
-    std::vector<std::array<int, 2>> index_transporting_pipes(M, std::array<int, 2>{-1, -1});
-
-    const std::size_t step = std::ceil(static_cast<double>(N) / M);
-    
-    for (std::size_t i{}; i < M; ++i) {
-        if (child_pid != 0) {
-            int current_pipe[2];
-            if (pipe(current_pipe) == -1) {
-                std::cout << "shat vata pipe" << std::endl;
-                return -1;  // shat vata
-            }
-            pipes[i] = {current_pipe[0], current_pipe[1]};
-
-            if (pipe(current_pipe) == -1) {
-                std::cout << "shat vata pipe" << std::endl;
-                return -1;  // shat vata
-            }
-            index_transporting_pipes[i] = {current_pipe[0], current_pipe[1]};
-	   std::pair<std::size_t, std::size_t> begin_end{step*i, step*(i+1)};
-	   write(index_transporting_pipes[i][1], &begin_end, sizeof(begin_end));
-
-            child_pid = fork();
-            if (child_pid == -1) {
-                std::cout << "shat vata fork" << std::endl;
-                return -1;  // doesn't kill children
-            }
-        }
-        if (child_pid == 0) {
-            close(pipes[i][0]);
-	   close(index_transporting_pipes[i][1]);
-	   std::pair<std::size_t, std::size_t> begin_end{-1, -1};
-	   read(index_transporting_pipes[i][0], &begin_end, sizeof(begin_end));
-            int restricted_sum = std::accumulate(
-                random_numbers.begin() + begin_end.first,
-                std::min(random_numbers.begin() + begin_end.second, random_numbers.end()),
-                0
-            );
-            std::cout << restricted_sum << std::endl;
-            write(pipes[i][1], &restricted_sum, sizeof(restricted_sum));
-            close(pipes[i][1]);
-            return 0;
-        }
-    }
-
-    int res{};
-    for (auto [in, out] : pipes) {  // out is closed
-        wait(nullptr);
-        int restricted_sum;
-        read(in, &restricted_sum, sizeof(restricted_sum));
-        res += restricted_sum;
-        close(in);
-    }
-    std::cout << std::endl << res << std::endl;
+void* compute(void* input) {
+  auto [left, right, function] = *static_cast<args_t*>(input);
+  return new int{functions[function](left, right)};
 }
+
+void print(std::pair<args_t, int*> expression) {
+  auto [left, right, function] = expression.first;
+  std::cout << left << " " << function << " " << right << " = " << *expression.second << std::endl;
+}
+
+int main() {
+    std::size_t N;
+    std::cin >> N;
+    std::vector<pthread_t> threads(N);
+    std::vector<std::pair<args_t, int*>> results(N);
+    for (std::size_t i{}; i < N; ++i) {
+        int left, right;
+        std::string function;
+        std::cin >> left >> right >> function;
+        results[i].first = {left, right, function};
+        void* args = &results[i].first;
+        if (pthread_create(
+          &threads[i], nullptr, compute, args
+        )) {
+          std::cerr << "thread " << i << " wasn't made" << std::endl;
+          return -1;
+        }
+    }
+
+    for (std::size_t i{}; i < N; ++i) {
+      void* result{};
+      pthread_join(threads[i], &result);
+      results[i].second = static_cast<int*>(result);
+    }
+
+    for (auto result : results) {
+      print(result);
+    }
+
+    for (auto el : results) {
+      delete el.second;
+    }
+}
+
