@@ -50,9 +50,9 @@ int main() {
     auto start = std::chrono::high_resolution_clock::now();
     std::size_t thread_count = 100;
     Integer* integer = new Integer{0};
-    std::vector<pthread_t*> threads(thread_count);
+    std::vector<pthread_t*> threads(thread_count, new pthread_t{});
 
-    for (int i = 0; i < thread_count; i++){
+    for (std::size_t i = 0; i < thread_count; i++){
         if (pthread_create(
                 threads[i],
                 nullptr,
@@ -71,6 +71,9 @@ int main() {
     std::cout << integer->get_value() << std::endl;
 
     delete integer;
+    for (auto thread : threads) {
+        delete thread;
+    }
 
     auto stop = std::chrono::high_resolution_clock::now();
 
