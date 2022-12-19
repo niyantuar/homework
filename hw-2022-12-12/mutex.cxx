@@ -83,7 +83,7 @@ class TaskQueue {
     }
   private:
     std::queue<task_t> _tasks;
-    std::queue<void**> _output_arguments;
+    std::queue<void**> _argument_arguments;
     std::vector<pthread_t> _threads;
     sem_t* _semaphore;
     pthread_mutex_t* _mutex;
