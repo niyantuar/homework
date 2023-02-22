@@ -42,7 +42,7 @@ void* f(void*) {
 int main() {
     pthread_mutex_init(&mutex, nullptr);
     pthread_cond_init(&cond, nullptr);
-    int n;
+    char n;
     pthread_t thread;
     pthread_create(&thread, nullptr, f, nullptr);
     pthread_detach(thread);
