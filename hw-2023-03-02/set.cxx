@@ -21,6 +21,7 @@ int main() {
 
     std::size_t index{};
     char input;
+    std::cin >> std::noskipws;
     while (std::cin >> shmat_array[index]) {
         index++;
         shmat_array[index] = 0;
