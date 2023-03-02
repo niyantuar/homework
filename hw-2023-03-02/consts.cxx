@@ -10,7 +10,7 @@ int get_shm_id() {
         perror("ftok");
         throw std::runtime_error{"ftok"};
     }
-    int shm_id = shmget(shm_key, MEMORY_SIZE, IPC_CREAT);
+    int shm_id = shmget(shm_key, MEMORY_SIZE, 0600);
     if (shm_id == -1) {
         perror("shmget");
         throw std::runtime_error{"shmget"};
