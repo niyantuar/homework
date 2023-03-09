@@ -18,6 +18,7 @@ void atomic_println(const std::string& str) {
 
 
 int main() {
+    pthread_mutex_init(&mutex_ostream, nullptr);
     const int sem_id = semget(IPC_PRIVATE, 1, IPC_CREAT | 0600);
     if (sem_id == -1) {
         throw std::logic_error{"semget"};
@@ -48,4 +49,6 @@ int main() {
     for (int i = 1; i <= n; i++) {
         wait(nullptr);
     }
+    pthread_mutex_destroy(&mutex);
+    semctl(sem_id, 1, IPC_RMID);
 }
