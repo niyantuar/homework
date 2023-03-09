@@ -49,6 +49,6 @@ int main() {
     for (int i = 1; i <= n; i++) {
         wait(nullptr);
     }
-    pthread_mutex_destroy(&mutex);
+    pthread_mutex_destroy(&mutex_ostream);
     semctl(sem_id, 1, IPC_RMID);
 }
