@@ -7,11 +7,18 @@
 
 void create_and_run_readers_and_writers(int N, int M, const char* path) {
     throw std::logic_error{"not implemented"};
+    Manager manager{path};
     for (int i = 0; i < N; ++i) {
-
+        if (fork() == 0) {
+            manager.reader();
+            return;
+        }
     }
     for (int i = 0; i < M; ++i) {
-
+        if (fork() == 0) {
+            manager.writer(i);
+            return;
+        }
     }
     for (int i = 0; i < N + M; ++i) {
         wait(nullptr);
