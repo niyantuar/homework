@@ -32,7 +32,8 @@ void Manager::init(const char* file_path) {
         throw std::logic_error{"semget"};
     }
     struct sembuf sops[] {
-        {0, 1, 0}, { 1, 1, 0 }
+        {0, 1, 0},
+        {1, 1, 0}
     };
     if (semop(sem_id, sops, sizeof(sops) / sizeof(struct sembuf)) == -1) {
         throw std::logic_error{"semget"};
