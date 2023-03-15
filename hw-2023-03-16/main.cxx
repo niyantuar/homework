@@ -3,10 +3,10 @@
 #include <iostream>
 #include <stdexcept>
 #include <sys/wait.h>
+#include <unistd.h>
 
 
 void create_and_run_readers_and_writers(int N, int M, const char* path) {
-    throw std::logic_error{"not implemented"};
     Manager manager{path};
     for (int i = 0; i < N; ++i) {
         if (fork() == 0) {
@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
         std::string mode{argv[1]};
         int N = std::atoi(argv[2]);
         int M = std::atoi(argv[3]);
-        const char* path{argv[2]};
+        const char* path{argv[4]};
         if (mode == "rw") {
             create_and_run_readers_and_writers(N, M, path);
         } else {

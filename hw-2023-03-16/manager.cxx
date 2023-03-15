@@ -2,16 +2,21 @@
 
 #include <iostream>
 #include <pthread.h>
+#include <sys/ipc.h>
 #include <unistd.h>
 #include <stdexcept>
 #include <sys/shm.h>
 #include <sys/sem.h>
+#include <fcntl.h>
 
 
 #define MUTEX 0
 #define DB 1
 
+pthread_mutex_t Manager::_ostream_mutex{};
+
 void Manager::init(const char* file_path) {
+    creat(file_path, 0600);
     int token = ftok(file_path, 7);
     if (token == -1) {
         throw std::logic_error{"ftok"};
@@ -32,9 +37,28 @@ void Manager::init(const char* file_path) {
     if (semop(sem_id, sops, sizeof(sops) / sizeof(struct sembuf)) == -1) {
         throw std::logic_error{"semget"};
     }
+    pthread_mutex_init(&_ostream_mutex, nullptr);
 }
 void Manager::destroy(const char* file_path) {
-    throw std::logic_error{"not implemented"};
+    int token = ftok(file_path, 7);
+    if (token == -1) {
+        throw std::logic_error{"ftok"};
+    }
+    int shm_id = shmget(token, 33 * sizeof(int), 0600);
+    if (shm_id == -1) {
+        throw std::logic_error{"shmget"};
+    }
+    shmctl(shm_id, IPC_RMID, nullptr);
+    if (unlink(file_path) == -1) {
+        throw std::logic_error{"unlink"};
+    }
+
+    int sem_id = semget(token, 2, 0600);
+    if (sem_id == -1) {
+        throw std::logic_error{"semget"};
+    }
+    semctl(sem_id, 2, IPC_RMID, nullptr);
+    pthread_mutex_destroy(&_ostream_mutex);
 }
 
 Manager::Manager(const char* file_path) {
@@ -87,10 +111,12 @@ void Manager::reader() {
     }
     semop(_sem_id, &mutex_up, 1);
 
+    pthread_mutex_lock(&_ostream_mutex);
     for (int i = 0; i < 32; ++i) {
         std::cout << b[i] << " ";
     }
     std::cout << std::endl;
+    pthread_mutex_unlock(&_ostream_mutex);
 }
 void Manager::writer(int value) {
     struct sembuf db_down = {DB, -1, 0};
