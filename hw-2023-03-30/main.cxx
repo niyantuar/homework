@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
             if (semop(sem_id, &mutex_lock, 1) == -1) {
                 throw std::logic_error{"mutex lock"};
             }
-            put_item(i, write_index_address, read_index_address, data);
+            put_item(i + 1, write_index_address, read_index_address, data);
             if (semop(sem_id, &mutex_unlock, 1) == -1) {
                 throw std::logic_error{"mutex unlock"};
             }
