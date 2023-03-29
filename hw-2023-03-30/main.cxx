@@ -56,6 +56,9 @@ int main(int argc, char** argv) {
                      sizeof(Buffer),
                      IPC_CREAT | IPC_EXCL | 0600
                  );
+    if (shm_id == -1) {
+        throw std::logic_error{"shmget"};
+    }
 
     int* write_index_address = reinterpret_cast<int*>(shmat(shm_id, nullptr, 0));
     int* read_index_address = write_index_address + 1;
@@ -64,10 +67,6 @@ int main(int argc, char** argv) {
     *read_index_address = 0;
     for (std::size_t i = 0; i < BUF_SIZE; ++i) {
         data[i] = 0;
-    }
-
-    if (shm_id == -1) {
-        throw std::logic_error{"shmget"};
     }
 
     int sem_id = semget(token, 3, IPC_CREAT | IPC_EXCL | 0600);
