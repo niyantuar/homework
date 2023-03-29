@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
             int* data = read_index_address + 1;
 
             if (semop(sem_id, &reserve, 1) == -1) {
-                throw std::logic_error{"couldn't produce"};
+                throw std::logic_error{"couldn't reserve"};
             }
 
             if (semop(sem_id, &mutex_lock, 1) == -1) {
@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
                 throw std::logic_error{"mutex unlock"};
             }
             if (semop(sem_id, &add_item, 1) == -1) {
-                throw std::logic_error{"couldn't produce"};
+                throw std::logic_error{"couldn't add item"};
             }
             return 0;
         }
@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
             int* data = read_index_address + 1;
 
             if (semop(sem_id, &remove_item, 1) == -1) {
-                throw std::logic_error{"couldn't produce"};
+                throw std::logic_error{"couldn't remove item"};
             }
 
             if (semop(sem_id, &mutex_lock, 1) == -1) {
@@ -149,7 +149,7 @@ int main(int argc, char** argv) {
                 throw std::logic_error{"mutex unlock"};
             }
             if (semop(sem_id, &reliese, 1) == -1) {
-                throw std::logic_error{"couldn't produce"};
+                throw std::logic_error{"couldn't reliese"};
             }
             return 0;
         }
