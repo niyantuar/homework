@@ -10,7 +10,7 @@
 #include <stdexcept>
 
 static constexpr std::size_t BUF_SIZE{4};
-static constexpr const char* TOKEN_FILE{"token_file"};
+static constexpr const char* TOKEN_FILE{"token_file.tok"};
 
 struct Buffer {
     int write_index;
@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     int shm_id = shmget(
                      token,
                      sizeof(Buffer),
-                     IPC_CREAT | IPC_EXCL | 0600
+                     IPC_CREAT | 0600
                  );
     if (shm_id == -1) {
         throw std::logic_error{"shmget"};
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
         data[i] = 0;
     }
 
-    int sem_id = semget(token, 3, IPC_CREAT | IPC_EXCL | 0600);
+    int sem_id = semget(token, 3, IPC_CREAT | 0600);
     // sem[0]: shows the count of the free slots in the buffer
     // sem[1]: shows the count of the unused products
     // sem[2]: mutex for the buffer
