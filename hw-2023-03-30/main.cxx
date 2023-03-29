@@ -9,13 +9,6 @@
 #include <fcntl.h>
 #include <stdexcept>
 
-pthread_mutex_t mutex_ostream;
-void atomic_println(const std::string& str) {
-    pthread_mutex_lock(&mutex_ostream);
-    std::cout << str << std::endl;
-    pthread_mutex_unlock(&mutex_ostream);
-}
-
 static constexpr std::size_t BUF_SIZE{4};
 static constexpr const char* TOKEN_FILE{"token_file"};
 
@@ -25,16 +18,23 @@ struct Buffer {
     int data[BUF_SIZE];
 };
 
-static Buffer buffer{};
-
-void put_item(int value) {
-    buffer.data[buffer.write_index] = value;
-    buffer.write_index = (buffer.write_index + 1) % BUF_SIZE;
+void put_item(
+    int value,
+    int* write_index_address,
+    int* read_index_address,
+    int* data
+) {
+    data[*write_index_address] = value;
+    *write_index_address = (*write_index_address + 1) % BUF_SIZE;
 }
 
-int get_item() {
-    int res = buffer.data[buffer.read_index];
-    buffer.read_index = (buffer.read_index + 1) % BUF_SIZE;
+int get_item(
+    int* write_index_address,
+    int* read_index_address,
+    int* data
+) {
+    int res = data[*read_index_address];
+    *read_index_address = (*read_index_address + 1) % BUF_SIZE;
     return res;
 }
 
@@ -53,9 +53,19 @@ int main(int argc, char** argv) {
 
     int shm_id = shmget(
                      token,
-                     BUF_SIZE * sizeof(int),
+                     sizeof(Buffer),
                      IPC_CREAT | IPC_EXCL | 0600
                  );
+
+    int* write_index_address = reinterpret_cast<int*>(shmat(shm_id, nullptr, 0));
+    int* read_index_address = write_index_address + 1;
+    int* data = read_index_address + 1;
+    *write_index_address = 0;
+    *read_index_address = 0;
+    for (std::size_t i = 0; i < BUF_SIZE; ++i) {
+        data[i] = 0;
+    }
+
     if (shm_id == -1) {
         throw std::logic_error{"shmget"};
     }
@@ -90,15 +100,18 @@ int main(int argc, char** argv) {
             {1, 1, 0},
         };
         if (fork() == 0) {  // producer
-            if (semop(sem_id, &mutex_lock, 1) == -1) {
-                throw std::logic_error{"mutex lock"};
-            }
+            int* write_index_address = reinterpret_cast<int*>(shmat(shm_id, nullptr, 0));
+            int* read_index_address = write_index_address + 1;
+            int* data = read_index_address + 1;
 
-            put_item(i);
             if (semop(sem_id, produce, sizeof(produce) / sizeof(*produce)) == -1) {
                 throw std::logic_error{"couldn't produce"};
             }
 
+            if (semop(sem_id, &mutex_lock, 1) == -1) {
+                throw std::logic_error{"mutex lock"};
+            }
+            put_item(i, write_index_address, read_index_address, data);
             if (semop(sem_id, &mutex_unlock, 1) == -1) {
                 throw std::logic_error{"mutex unlock"};
             }
@@ -112,16 +125,19 @@ int main(int argc, char** argv) {
             {1, -1, 0}
         };
         if (fork() == 0) {  // consumer
-            if (semop(sem_id, &mutex_lock, 1) == -1) {
-                throw std::logic_error{"mutex lock"};
-            }
+            int* write_index_address = reinterpret_cast<int*>(shmat(shm_id, nullptr, 0));
+            int* read_index_address = write_index_address + 1;
+            int* data = read_index_address + 1;
 
-            int item = get_item();
             if (semop(sem_id, consume, sizeof(consume) / sizeof(*consume)) == -1) {
                 throw std::logic_error{"couldn't produce"};
             }
-            atomic_println(std::to_string(item));
 
+            if (semop(sem_id, &mutex_lock, 1) == -1) {
+                throw std::logic_error{"mutex lock"};
+            }
+            int item = get_item(write_index_address, read_index_address, data);
+            std::cout << item << std::endl;
             if (semop(sem_id, &mutex_unlock, 1) == -1) {
                 throw std::logic_error{"mutex unlock"};
             }
