@@ -95,16 +95,18 @@ int main(int argc, char** argv) {
     };
 
     for (int i{}; i < N; i++) {
-        struct sembuf produce[] {
-            {0, -1, 0},
-            {1, 1, 0},
+        struct sembuf reserve {
+            0, -1, 0
+        };
+        struct sembuf add_item {
+            1, 1, 0
         };
         if (fork() == 0) {  // producer
             int* write_index_address = reinterpret_cast<int*>(shmat(shm_id, nullptr, 0));
             int* read_index_address = write_index_address + 1;
             int* data = read_index_address + 1;
 
-            if (semop(sem_id, produce, sizeof(produce) / sizeof(*produce)) == -1) {
+            if (semop(sem_id, &reserve, 1) == -1) {
                 throw std::logic_error{"couldn't produce"};
             }
 
@@ -115,21 +117,26 @@ int main(int argc, char** argv) {
             if (semop(sem_id, &mutex_unlock, 1) == -1) {
                 throw std::logic_error{"mutex unlock"};
             }
+            if (semop(sem_id, &add_item, 1) == -1) {
+                throw std::logic_error{"couldn't produce"};
+            }
             return 0;
         }
     }
 
     for (int i{}; i < M; i++) {
-        struct sembuf consume[] {
-            {0, 1, 0},
-            {1, -1, 0}
+        struct sembuf reliese {
+            0, 1, 0
+        };
+        struct sembuf remove_item {
+            1, -1, 0
         };
         if (fork() == 0) {  // consumer
             int* write_index_address = reinterpret_cast<int*>(shmat(shm_id, nullptr, 0));
             int* read_index_address = write_index_address + 1;
             int* data = read_index_address + 1;
 
-            if (semop(sem_id, consume, sizeof(consume) / sizeof(*consume)) == -1) {
+            if (semop(sem_id, &remove_item, 1) == -1) {
                 throw std::logic_error{"couldn't produce"};
             }
 
@@ -140,6 +147,9 @@ int main(int argc, char** argv) {
             std::cout << item << std::endl;
             if (semop(sem_id, &mutex_unlock, 1) == -1) {
                 throw std::logic_error{"mutex unlock"};
+            }
+            if (semop(sem_id, &reliese, 1) == -1) {
+                throw std::logic_error{"couldn't produce"};
             }
             return 0;
         }
