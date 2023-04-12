@@ -20,7 +20,7 @@ void* send(void*) {
     std::cin >> receiver_name >> message;
     sockaddr_un address{};
     address.sun_family = AF_LOCAL;
-    strcpy(address.sun_path, receiver_name.c_str());
+    std::strcpy(address.sun_path, receiver_name.c_str());
     sendto(
         client_fd,
         message.c_str(),
@@ -34,7 +34,20 @@ void* send(void*) {
 
 void* receive(void*) {
     while (true) {
-
+        char buffer[1024] {};
+        sockaddr_un address{};
+        address.sun_family = AF_LOCAL;
+        socklen_t address_length = sizeof(address);
+        recvfrom(
+            client_fd,
+            buffer,
+            sizeof(buffer),
+            0,
+            reinterpret_cast<sockaddr*>(&address),
+            &address_length
+        );
+        std::cout << "received message " << buffer
+                  << " from " << address.sun_path << std::endl;
     }
 }
 
@@ -72,5 +85,5 @@ int main(int argc, char** argv) {
     pthread_detach(receiver);
     pthread_join(sender, nullptr);
 
-    // release socket
+    close(client_fd);
 }
