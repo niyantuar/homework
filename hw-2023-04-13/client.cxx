@@ -5,11 +5,20 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <cstring>
+#include <sys/signal.h>
 
 
 sockaddr_un socket_address;
 
 int client_fd{};
+
+std::string client_name{};
+
+void sigint_handler(int signal_number) {
+    close(client_fd);
+    unlink(client_name.c_str());
+    exit(signal_number);
+}
 
 void* send(void*) {
     std::string receiver_name;
@@ -52,7 +61,8 @@ int main(int argc, char** argv) {
     if (argc < 2) {
         throw std::logic_error{"client_name is not specified"};
     }
-    std::string client_name{argv[1]};
+    client_name = argv[1];
+    signal(SIGINT, sigint_handler);
 
     client_fd = socket(AF_LOCAL, SOCK_DGRAM, 0);
     if (client_fd == -1) {
@@ -83,4 +93,5 @@ int main(int argc, char** argv) {
     pthread_join(sender, nullptr);
 
     close(client_fd);
+    unlink(client_name.c_str());
 }
