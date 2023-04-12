@@ -52,7 +52,7 @@ void* receive(void*) {
 }
 
 int main(int argc, char** argv) {
-    if (argc < 1) {
+    if (argc < 2) {
         throw std::logic_error{"client_name is not specified"};
     }
     std::string client_name{argv[1]};
