@@ -7,10 +7,7 @@
 #include <cstring>
 
 
-struct SocketAddress {
-    sa_family_t sa_family;
-    char sa_data[1024];
-} socket_address;
+sockaddr_un socket_address;
 
 int client_fd{};
 
@@ -57,14 +54,14 @@ int main(int argc, char** argv) {
     }
     std::string client_name{argv[1]};
 
-    client_fd = socket(AF_LOCAL, SOCK_STREAM, 0);
+    client_fd = socket(AF_LOCAL, SOCK_DGRAM, 0);
     if (client_fd == -1) {
         perror("socket error");
         return 1;
     }
 
-    socket_address.sa_family = AF_LOCAL;
-    std::strcpy(socket_address.sa_data, client_name.c_str());
+    socket_address.sun_family = AF_LOCAL;
+    std::strcpy(socket_address.sun_path, client_name.c_str());
     if (
         bind(
             client_fd,
