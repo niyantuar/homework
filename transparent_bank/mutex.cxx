@@ -7,7 +7,7 @@ void Mutex::_connect_mutex(const char *file_path) {
   if (token == -1) {
     throw std::logic_error{"ftok"};
   }
-  int _sem_id = semget(token, 1, 0600);
+  _sem_id = semget(token, 1, 0600);
   if (_sem_id == -1) {
     throw std::logic_error{"semget"};
   }
@@ -18,7 +18,7 @@ void Mutex::_create_mutex(const char *file_path) {
   if (token == -1) {
     throw std::logic_error{"ftok"};
   }
-  int _sem_id = semget(token, 1, IPC_CREAT | IPC_EXCL | 0600);
+  _sem_id = semget(token, 1, IPC_CREAT | IPC_EXCL | 0600);
   if (_sem_id == -1) {
     throw std::logic_error{"semget"};
   }
@@ -34,5 +34,5 @@ Mutex::Mutex(const char *file_path, bool is_created) {
 }
 void Mutex::lock() { semop(_sem_id, &_down, 1); }
 void Mutex::_destroy_mutex(const char *file_path) {
-  semctl(_sem_id, 1, IPC_RMID, nullptr);
+  semctl(_sem_id, 0, IPC_RMID, nullptr);
 }
