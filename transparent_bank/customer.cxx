@@ -7,11 +7,11 @@ Customer::Customer()
     , _is_frozen{false} {}
 
 bool Customer::_is_balance_valid(balance_t balance) const noexcept {
-  return minimum_balance_allowed <= balance and
-         balance <= maximum_balance_allowed;
+  return _minimum_balance_allowed <= balance and
+         balance <= _maximum_balance_allowed;
 }
 Customer::BalanceInfo Customer::get_balance_info() const noexcept {
-    return {_balance, minimum_balance_allowed, maximum_balance_allowed};
+    return {_balance, _minimum_balance_allowed, _maximum_balance_allowed};
 }
 
 CustomerFrozenException::CustomerFrozenException()
@@ -29,7 +29,7 @@ bool Customer::is_valid_transaction(balance_t value) const noexcept {
 }
 void Customer::check_is_valid_transaction(balance_t value) const {
     if(not _is_balance_valid(_balance + value)) {
-        throw std::logic_error{"Invalid transaction"};
+        throw std::range_error{"Invalid transaction"};
     }
 }
 void Customer::transaction(balance_t value) {
@@ -39,4 +39,16 @@ void Customer::transaction(balance_t value) {
 }
 void Customer::unsafe_transaction(balance_t value) noexcept {
   _balance += value;
+}
+void Customer::set_maximum_allowed(balance_t maximum_allowed) {
+  if (_balance > maximum_allowed) {
+    throw std::range_error{"Invalid maximum"};
+  }
+  _maximum_balance_allowed = maximum_allowed;
+}
+void Customer::set_minimum_allowed(balance_t minimum_allowed) {
+  if (_balance > minimum_allowed) {
+    throw std::range_error{"Invalid minimum"};
+  }
+  _minimum_balance_allowed = minimum_allowed;
 }
