@@ -7,7 +7,7 @@
 
 class Mutex {
 public:
-  Mutex(const char *file_path, bool is_created = true);
+  explicit Mutex(const char *file_path, bool is_created = true);
   void lock();
   void unlock();
 

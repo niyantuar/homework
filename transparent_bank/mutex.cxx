@@ -1,7 +1,7 @@
 #include "mutex.hxx"
 
 struct sembuf Mutex::_up{0, 1, 0};
-struct sembuf Mutex::_down{0, 1, 0};
+struct sembuf Mutex::_down{0, -1, 0};
 void Mutex::_connect_mutex(const char *file_path) {
   int token = ftok(file_path, 7);
   if (token == -1) {
