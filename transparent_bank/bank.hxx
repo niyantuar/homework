@@ -1,5 +1,5 @@
-#ifndef QUERY_MANAGER_HXX
-#define QUERY_MANAGER_HXX
+#ifndef BANK_HXX
+#define BANK_HXX
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -21,4 +21,4 @@ class QueryManager {
         size_t _customer_count;
 };
 
-#endif // QUERY_MANAGER_HXX
+#endif // BANK_HXX
