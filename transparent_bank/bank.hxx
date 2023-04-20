@@ -10,7 +10,7 @@ class Bank {
     public:
         using customers_t = std::vector<Customer*>;
         using customers_ptr_t = std::shared_ptr<customers_t>;
-        Bank(customers_ptr_t customers, std::shared_ptr<Mutex> mutex);
+        Bank(customers_ptr_t customers, const Mutex& mutex);
 
         Customer::BalanceInfo get_balance_info(size_t index) const;
         void freeze(size_t index);
@@ -25,7 +25,7 @@ class Bank {
         );
       private:
         customers_ptr_t _customers;
-        mutable std::shared_ptr<Mutex> _mutex;
+        mutable Mutex _mutex;
 };
 
 #endif // BANK_HXX

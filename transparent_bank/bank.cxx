@@ -1,25 +1,25 @@
 #include "bank.hxx"
 #include <iostream>
-Bank::Bank(customers_ptr_t customers, std::shared_ptr<Mutex> mutex) : _customers{customers}, _mutex(mutex) {}
+Bank::Bank(customers_ptr_t customers, const Mutex& mutex) : _customers{customers}, _mutex(mutex) {}
 Customer::BalanceInfo Bank::get_balance_info(size_t index) const {
-   _mutex->lock();
+   _mutex.lock();
    auto balance_info = _customers->at(index)->get_balance_info();
-   _mutex->unlock();
+   _mutex.unlock();
    return balance_info;
 }
 void Bank::freeze(size_t index) {
-   _mutex->lock();
+   _mutex.lock();
   _customers->at(index)->freeze();
-   _mutex->unlock();
+   _mutex.unlock();
 }
 void Bank::unfreeze(size_t index) {
-   _mutex->lock();
+   _mutex.lock();
   _customers->at(index)->unfreeze();
-   _mutex->unlock();
+   _mutex.unlock();
 }
 void Bank::send_money(size_t from, size_t to,
                               Customer::balance_t value) {
-   _mutex->lock();
+   _mutex.lock();
   if (value <= 0) {
     throw std::logic_error{"Sent value cannot be non positive"};
   }
@@ -33,11 +33,11 @@ void Bank::send_money(size_t from, size_t to,
     sender->unsafe_transaction(-value);
     receiver->unsafe_transaction(value);
   }
-   _mutex->unlock();
+   _mutex.unlock();
 }
 void Bank::transaction_to_every_valid_customer(
     Customer::balance_t value) {
-   _mutex->lock();
+   _mutex.lock();
   for (size_t i{}; i < _customers->size(); ++i) {
     try {
       (*_customers)[i]->transaction(value);
@@ -47,17 +47,17 @@ void Bank::transaction_to_every_valid_customer(
       std::cerr << "Customer " << i << ": " << e.what();
     }
   }
-   _mutex->unlock();
+   _mutex.unlock();
 }
 void Bank::set_minimum_allowed(Customer::balance_t minimum_allowed,
                                        size_t index) {
-   _mutex->lock();
+   _mutex.lock();
   _customers->at(index)->set_minimum_allowed(minimum_allowed);
-   _mutex->unlock();
+   _mutex.unlock();
 }
 void Bank::set_maximum_allowed(Customer::balance_t maximum_allowed,
                                        size_t index) {
-   _mutex->lock();
+   _mutex.lock();
   _customers->at(index)->set_maximum_allowed(maximum_allowed);
-   _mutex->unlock();
+   _mutex.unlock();
 }
