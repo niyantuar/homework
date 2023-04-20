@@ -1,37 +1,63 @@
 #include "bank.hxx"
-QueryManager::QueryManager(customers_ptr_t customers) : _customers{customers} {}
-Customer::BalanceInfo QueryManager::get_balance_info(size_t index) const {
-  check_is_index_valid(index);
-  return (*_customers)[index].get_balance_info();
+#include <iostream>
+Bank::Bank(customers_ptr_t customers, std::shared_ptr<Mutex> mutex) : _customers{customers}, _mutex(mutex) {}
+Customer::BalanceInfo Bank::get_balance_info(size_t index) const {
+   _mutex->lock();
+   auto balance_info = _customers->at(index)->get_balance_info();
+   _mutex->unlock();
+   return balance_info;
 }
-void QueryManager::check_is_index_valid(size_t index) const {
-  if (index >= _customer_count) {
-    throw std::range_error{"Invalid index"};
-  }
+void Bank::freeze(size_t index) {
+   _mutex->lock();
+  _customers->at(index)->freeze();
+   _mutex->unlock();
 }
-void QueryManager::freeze(size_t index) {
-  check_is_index_valid(index);
-  (*_customers)[index].freeze();
+void Bank::unfreeze(size_t index) {
+   _mutex->lock();
+  _customers->at(index)->unfreeze();
+   _mutex->unlock();
 }
-void QueryManager::unfreeze(size_t index) {
-  check_is_index_valid(index);
-  (*_customers)[index].unfreeze();
-}
-void QueryManager::send_money(size_t from, size_t to,
+void Bank::send_money(size_t from, size_t to,
                               Customer::balance_t value) {
-  check_is_index_valid(from);
-  check_is_index_valid(to);
+   _mutex->lock();
   if (value <= 0) {
     throw std::logic_error{"Sent value cannot be non positive"};
   }
 
-  auto &sender = (*_customers)[from];
-  auto &receiver = (*_customers)[to];
-  sender.check_is_not_frozen();
-  receiver.check_is_not_frozen();
-  if (sender.is_valid_transaction(-value) and
-      receiver.is_valid_transaction(value)) {
-    sender.unsafe_transaction(-value);
-    receiver.unsafe_transaction(value);
+  auto &sender = _customers->at(from);
+  auto &receiver = _customers->at(to);
+  sender->check_is_not_frozen();
+  receiver->check_is_not_frozen();
+  if (sender->is_valid_transaction(-value) and
+      receiver->is_valid_transaction(value)) {
+    sender->unsafe_transaction(-value);
+    receiver->unsafe_transaction(value);
   }
+   _mutex->unlock();
+}
+void Bank::transaction_to_every_valid_customer(
+    Customer::balance_t value) {
+   _mutex->lock();
+  for (size_t i{}; i < _customers->size(); ++i) {
+    try {
+      (*_customers)[i]->transaction(value);
+    } catch (const CustomerFrozenException &e) {
+      std::cerr << "Customer " << i << ": " << e.what();
+    } catch (const std::range_error &e) {
+      std::cerr << "Customer " << i << ": " << e.what();
+    }
+  }
+   _mutex->unlock();
+}
+void Bank::set_minimum_allowed(Customer::balance_t minimum_allowed,
+                                       size_t index) {
+   _mutex->lock();
+  _customers->at(index)->set_minimum_allowed(minimum_allowed);
+   _mutex->unlock();
+}
+void Bank::set_maximum_allowed(Customer::balance_t maximum_allowed,
+                                       size_t index) {
+   _mutex->lock();
+  _customers->at(index)->set_maximum_allowed(maximum_allowed);
+   _mutex->unlock();
 }
