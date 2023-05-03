@@ -4,13 +4,11 @@
 #include <stdexcept>
 #include <vector>
 #include "mutex.hxx"
-#include "customer.hxx"
+#include "bank_storage.hxx"
 
 class Bank {
     public:
-        using customers_t = std::vector<Customer*>;
-        using customers_ptr_t = std::shared_ptr<customers_t>;
-        Bank(customers_ptr_t customers, const Mutex& mutex);
+        Bank(const BankStorage* storage, const Mutex& mutex);
 
         Customer::BalanceInfo get_balance_info(size_t index) const;
         void freeze(size_t index);
@@ -24,7 +22,7 @@ class Bank {
             Customer::balance_t maximum_allowed, size_t index
         );
       private:
-        customers_ptr_t _customers;
+        BankStorage* _storage;
         mutable Mutex _mutex;
 };
 
