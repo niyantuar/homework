@@ -1,5 +1,6 @@
 #include "bank.hxx"
 #include "bank_storage.hxx"
+#include <cstdlib>
 #include <iostream>
 Bank::Bank(BankStorage* storage, const Mutex& mutex) : _storage {storage},
     _mutex(mutex) {}
@@ -65,6 +66,7 @@ void Bank::set_maximum_allowed(Customer::balance_t maximum_allowed,
 }
 void Bank::print() const {
     _mutex.lock();
+    std::system("clear");
     const std::string id = "id";
     const std::string current_balance = "current";
     const std::string minimum_allowed_balance = "minimum";

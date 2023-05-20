@@ -10,11 +10,31 @@
 #include <sys/shm.h>
 
 
-constexpr int FTOK_KEY{9};
-const std::string INIT{"init"};
-const std::string DESTROY{"destroy"};
-const std::string CLIENT{"client"};
+static constexpr int FTOK_KEY{9};
+static const std::string INIT{"init"};
+static const std::string DESTROY{"destroy"};
+static const std::string CLIENT{"client"};
 
+static const std::string FREEZE{"f"};
+static const std::string UNFREEZE{"u"};
+static const std::string SEND_MONEY{"s"};
+static const std::string TRANSACTION_TO_EVERY_VALID_CUSTOMER{"t"};
+static const std::string SET_MINIMUM_ALLOWED{"smin"};
+static const std::string SET_MAXIMUM_ALLOWED{"smax"};
+
+void print_command_info() {
+    std::cout << "commands: \n"
+              << "    freeze: " << FREEZE << " `index`\n"
+              << "    unfreeze: " << UNFREEZE << " `index`\n"
+              << "    send money: " << SEND_MONEY
+              << " `index from` `index to` `transaction value`\n"
+              << "    transaction to every valid customer: "
+              << TRANSACTION_TO_EVERY_VALID_CUSTOMER << " `transaction value`\n"
+              << "    set minimum allowed: " << SET_MINIMUM_ALLOWED
+              << " `index` `minimum balance`\n"
+              << "    set maximum allowed: " << SET_MAXIMUM_ALLOWED
+              << " `index` `maximum balance`\n";
+}
 
 int client(char** argv) {
     auto token = ftok(argv[0], FTOK_KEY);
@@ -32,56 +52,54 @@ int client(char** argv) {
 
     Bank bank{bank_storage, mutex};
 
-    const std::string FREEZE{"freeze"};
-    const std::string UNFREEZE{"unfreeze"};
-    const std::string SEND_MONEY{"send_money"};
-    const std::string TRANSACTION_TO_EVERY_VALID_CUSTOMER{
-        "transaction_to_every_valid_customer"
-    };
-    const std::string SET_MINIMUM_ALLOWED{"set_minimum_allowed"};
-    const std::string SET_MAXIMUM_ALLOWED{"set_maximum_allowed"};
 
     while (true) {
         bank.print();
+        print_command_info();
+        std::cout << ">" << std::flush;
         std::string command;
         std::cin >> command;
-        if (command == FREEZE) {
-            std::size_t index;
-            std::cin >> index;
-            bank.freeze(index);
-        } else if (command == UNFREEZE) {
-            std::size_t index;
-            std::cin >> index;
-            bank.unfreeze(index);
-        } else if (command == SEND_MONEY) {
-            std::size_t from, to;
-            Customer::balance_t value;
-            std::cin >> from >> to >> value;
-            if (value < 0) {
-                std::cerr << "no negative money\n";
-                continue;
+        try {
+            if (command == FREEZE) {
+                std::size_t index;
+                std::cin >> index;
+                bank.freeze(index);
+            } else if (command == UNFREEZE) {
+                std::size_t index;
+                std::cin >> index;
+                bank.unfreeze(index);
+            } else if (command == SEND_MONEY) {
+                std::size_t from, to;
+                Customer::balance_t value;
+                std::cin >> from >> to >> value;
+                if (value < 0) {
+                    std::cerr << "no negative money\n";
+                    continue;
+                }
+                bank.send_money(from, to, value);
+            } else if (command == TRANSACTION_TO_EVERY_VALID_CUSTOMER) {
+                Customer::balance_t value;
+                std::cin >> value;
+                if (value < 0) {
+                    std::cerr << "no negative money\n";
+                    continue;
+                }
+                bank.transaction_to_every_valid_customer(value);
+            } else if (command == SET_MINIMUM_ALLOWED) {
+                std::size_t index;
+                Customer::balance_t minimum_allowed;
+                std::cin >> index >> minimum_allowed;
+                bank.set_minimum_allowed(minimum_allowed, index);
+            } else if (command == SET_MAXIMUM_ALLOWED) {
+                std::size_t index;
+                Customer::balance_t maximum_allowed;
+                std::cin >> index >> maximum_allowed;
+                bank.set_maximum_allowed(maximum_allowed, index);
+            } else {
+                std::logic_error{"not command `" + command + "` was found"};
             }
-            bank.send_money(from, to, value);
-        } else if (command == TRANSACTION_TO_EVERY_VALID_CUSTOMER) {
-            Customer::balance_t value;
-            std::cin >> value;
-            if (value < 0) {
-                std::cerr << "no negative money\n";
-                continue;
-            }
-            bank.transaction_to_every_valid_customer(value);
-        } else if (command == SET_MINIMUM_ALLOWED) {
-            Customer::balance_t minimum_allowed;
-            std::size_t index;
-            std::cin >> minimum_allowed >> index;
-            bank.set_minimum_allowed(minimum_allowed, index);
-        } else if (command == SET_MAXIMUM_ALLOWED) {
-            Customer::balance_t maximum_allowed;
-            std::size_t index;
-            std::cin >> maximum_allowed >> index;
-            bank.set_maximum_allowed(maximum_allowed, index);
-        } else {
-            std::logic_error{"not command `" + command + "` was found"};
+        } catch (...) {
+            mutex.unlock();
         }
     }
 
