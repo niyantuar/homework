@@ -1,19 +1,11 @@
 #include "bank.hxx"
-#include "bank_storage.hxx"
-#include "customer.hxx"
-#include "mutex.hxx"
 #include <cstddef>
 #include <iostream>
-#include <sstream>
 #include <stdexcept>
-#include <sys/ipc.h>
 #include <sys/shm.h>
 
 
 static constexpr int FTOK_KEY{9};
-static const std::string INIT{"init"};
-static const std::string DESTROY{"destroy"};
-static const std::string CLIENT{"client"};
 
 static const std::string FREEZE{"f"};
 static const std::string UNFREEZE{"u"};
@@ -37,8 +29,8 @@ void print_command_info() {
 }
 
 int client(char** argv) {
-    auto token = ftok(argv[0], FTOK_KEY);
-    Mutex mutex(argv[0]);
+    auto token = ftok(argv[1], FTOK_KEY);
+    Mutex mutex(argv[1]);
     int shmid = shmget(token, 0, 0600);
     if (shmid == -1) {
         throw std::logic_error{"shmget"};
@@ -53,7 +45,7 @@ int client(char** argv) {
     Bank bank{bank_storage, mutex};
 
     std::string log{};
-    while (true) {
+    while (std::cin) {
         std::system("clear");
         bank.print();
         print_command_info();
@@ -134,68 +126,9 @@ int client(char** argv) {
 }
 
 
-int init_bank(char** argv) {
-    std::size_t N;
-    std::stringstream args{argv[2]};
-    args >> N;
-    if (not args) {
-        throw std::invalid_argument{"argv[2] is not a number"};
-    }
-
-    auto token = ftok(argv[0], FTOK_KEY);
-    Mutex mutex(argv[0], false);
-
-    int shmid = shmget(
-                    token,
-                    sizeof(BankStorage) + sizeof(Customer) * N,
-                    IPC_CREAT | IPC_EXCL | 0600
-                );
-    if (shmid == -1) {
-        throw std::logic_error{"shmget"};
-    }
-    auto bank_storage = reinterpret_cast<BankStorage*>(
-                            shmat(shmid, nullptr, 0)
-                        );
-    if (reinterpret_cast<void*>(bank_storage) == reinterpret_cast<void*>(-1)) {
-        std::logic_error{"shmat error"};
-    }
-    bank_storage->user_count = N;
-    for (std::size_t i{}; i < N; i++) {
-        bank_storage->customers[i] = Customer{};
-    }
-    return 0;
-}
-
-int destroy_bank(char** argv) {
-    auto token = ftok(argv[0], FTOK_KEY);
-    Mutex mutex(argv[0]);
-    mutex.destroy_mutex();
-
-    int shmid = shmget(token, 0, 0600);
-    if (shmid == -1) {
-        throw std::logic_error{"shmget"};
-    }
-    shmctl(shmid, IPC_RMID, nullptr);
-    return 0;
-}
-
 int main(int argc, char** argv) {
-    if (argv[1] == INIT) {
-        if (argc != 3) {
-            throw std::invalid_argument{"init must have 3 arguments"};
-        }
-        return init_bank(argv);
+    if (argc != 2) {
+        throw std::invalid_argument{"client must have 2 arguments"};
     }
-    if (argv[1] == DESTROY) {
-        if (argc != 2) {
-            throw std::invalid_argument{"destroy must have 2 arguments"};
-        }
-        return destroy_bank(argv);
-    }
-    if (argv[1] == CLIENT) {
-        if (argc != 2) {
-            throw std::invalid_argument{"client must have 2 arguments"};
-        }
-        return client(argv);
-    }
+    return client(argv);
 }
