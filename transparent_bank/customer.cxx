@@ -53,7 +53,7 @@ void Customer::set_maximum_allowed(balance_t maximum_allowed) {
     _maximum_balance_allowed = maximum_allowed;
 }
 void Customer::set_minimum_allowed(balance_t minimum_allowed) {
-    if (_balance > minimum_allowed) {
+    if (_balance < minimum_allowed) {
         throw std::range_error{"Invalid minimum"};
     }
     _minimum_balance_allowed = minimum_allowed;
