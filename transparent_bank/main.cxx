@@ -124,6 +124,7 @@ int client(char** argv) {
             }
         } catch (const std::exception& e) {
             mutex.unlock();
+            log += "\n\t";
             log += e.what();
         }
         log += '\n';
