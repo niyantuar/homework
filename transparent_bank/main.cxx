@@ -52,7 +52,7 @@ int client(char** argv) {
         } else if (command == UNFREEZE) {
             std::size_t index;
             std::cin >> index;
-            bank.freeze(index);
+            bank.unfreeze(index);
         } else if (command == SEND_MONEY) {
             std::size_t from, to;
             Customer::balance_t value;
