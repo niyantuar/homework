@@ -33,7 +33,7 @@ int client(char** argv) {
     Bank bank{bank_storage, mutex};
 
     const std::string FREEZE{"freeze"};
-    const std::string UNFREEZE{"freeze"};
+    const std::string UNFREEZE{"unfreeze"};
     const std::string SEND_MONEY{"send_money"};
     const std::string TRANSACTION_TO_EVERY_VALID_CUSTOMER{
         "transaction_to_every_valid_customer"
