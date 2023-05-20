@@ -24,15 +24,15 @@ static const std::string SET_MAXIMUM_ALLOWED{"smax"};
 
 void print_command_info() {
     std::cout << "commands: \n"
-              << "    freeze: " << FREEZE << " `index`\n"
-              << "    unfreeze: " << UNFREEZE << " `index`\n"
-              << "    send money: " << SEND_MONEY
+              << "\tfreeze:\n\t\t" << FREEZE << " `index`\n"
+              << "\tunfreeze:\n\t\t" << UNFREEZE << " `index`\n"
+              << "\tsend money:\n\t\t" << SEND_MONEY
               << " `index from` `index to` `transaction value`\n"
-              << "    transaction to every valid customer: "
+              << "\ttransaction to every valid customer:\n\t\t"
               << TRANSACTION_TO_EVERY_VALID_CUSTOMER << " `transaction value`\n"
-              << "    set minimum allowed: " << SET_MINIMUM_ALLOWED
+              << "\tset minimum allowed:\n\t\t" << SET_MINIMUM_ALLOWED
               << " `index` `minimum balance`\n"
-              << "    set maximum allowed: " << SET_MAXIMUM_ALLOWED
+              << "\tset maximum allowed:\n\t\t" << SET_MAXIMUM_ALLOWED
               << " `index` `maximum balance`\n";
 }
 
@@ -52,26 +52,40 @@ int client(char** argv) {
 
     Bank bank{bank_storage, mutex};
 
-
+    std::string log{};
     while (true) {
+        std::system("clear");
         bank.print();
         print_command_info();
+        std::cout << log;
         std::cout << ">" << std::flush;
+        log += '>';
         std::string command;
         std::cin >> command;
+        log += command;
         try {
             if (command == FREEZE) {
                 std::size_t index;
                 std::cin >> index;
+                log += ' ';
+                log += std::to_string(index);
                 bank.freeze(index);
             } else if (command == UNFREEZE) {
                 std::size_t index;
                 std::cin >> index;
+                log += ' ';
+                log += std::to_string(index);
                 bank.unfreeze(index);
             } else if (command == SEND_MONEY) {
                 std::size_t from, to;
                 Customer::balance_t value;
                 std::cin >> from >> to >> value;
+                log += ' ';
+                log += std::to_string(from);
+                log += ' ';
+                log += std::to_string(to);
+                log += ' ';
+                log += std::to_string(value);
                 if (value < 0) {
                     std::cerr << "no negative money\n";
                     continue;
@@ -80,6 +94,8 @@ int client(char** argv) {
             } else if (command == TRANSACTION_TO_EVERY_VALID_CUSTOMER) {
                 Customer::balance_t value;
                 std::cin >> value;
+                log += ' ';
+                log += std::to_string(value);
                 if (value < 0) {
                     std::cerr << "no negative money\n";
                     continue;
@@ -89,18 +105,28 @@ int client(char** argv) {
                 std::size_t index;
                 Customer::balance_t minimum_allowed;
                 std::cin >> index >> minimum_allowed;
+                log += ' ';
+                log += std::to_string(index);
+                log += ' ';
+                log += std::to_string(minimum_allowed);
                 bank.set_minimum_allowed(minimum_allowed, index);
             } else if (command == SET_MAXIMUM_ALLOWED) {
                 std::size_t index;
                 Customer::balance_t maximum_allowed;
                 std::cin >> index >> maximum_allowed;
+                log += ' ';
+                log += std::to_string(index);
+                log += ' ';
+                log += std::to_string(maximum_allowed);
                 bank.set_maximum_allowed(maximum_allowed, index);
             } else {
                 std::logic_error{"not command `" + command + "` was found"};
             }
-        } catch (...) {
+        } catch (const std::exception& e) {
             mutex.unlock();
+            log += e.what();
         }
+        log += '\n';
     }
 
     return 0;
