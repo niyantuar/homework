@@ -3,8 +3,12 @@
 #include <memory>
 #include <stdexcept>
 #include <vector>
+#include <iostream>
+#include <iomanip>
+#include "customer.hxx"
 #include "mutex.hxx"
 #include "bank_storage.hxx"
+
 
 class Bank {
   public:
@@ -21,6 +25,8 @@ class Bank {
     void set_maximum_allowed(
         Customer::balance_t maximum_allowed, size_t index
     );
+    void print() const;
+
   private:
     BankStorage* _storage;
     mutable Mutex _mutex;

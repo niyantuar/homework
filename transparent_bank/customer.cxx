@@ -58,3 +58,12 @@ void Customer::set_minimum_allowed(balance_t minimum_allowed) {
     }
     _minimum_balance_allowed = minimum_allowed;
 }
+void Customer::print_status() const {
+    std::cout << std::setw(5) << std::boolalpha << _balance
+              << "   |   " << std::setw(5)
+              << _minimum_balance_allowed
+              << "   |   " << std::setw(5)
+              << _maximum_balance_allowed
+              << "   |    " << std::setw(5)
+              << _is_frozen << '\n';
+}

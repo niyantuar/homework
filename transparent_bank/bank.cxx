@@ -63,3 +63,28 @@ void Bank::set_maximum_allowed(Customer::balance_t maximum_allowed,
     _storage->at(index).set_maximum_allowed(maximum_allowed);
     _mutex.unlock();
 }
+void Bank::print() const {
+    _mutex.lock();
+    const std::string id = "id";
+    const std::string current_balance = "current";
+    const std::string minimum_allowed_balance = "minimum";
+    const std::string maximum_allowed_balance = "maximum";
+    const std::string is_frozen = "is frozen";
+    const std::string column = "  |  ";
+    const std::string status_line = id + column +
+                                    current_balance + column +
+                                    minimum_allowed_balance + column +
+                                    maximum_allowed_balance + column +
+                                    is_frozen;
+    const std::string horizontal_line(status_line.size(), '-');
+    std::cout << horizontal_line << '\n'
+              << status_line << '\n'
+              << horizontal_line << '\n';
+    for (size_t i{}; i < _storage->user_count; ++i) {
+        const auto& customer = _storage->customers[i];
+        std::cout << std::setw(3) << i << " |   ";
+        customer.print_status();
+    }
+    std::cout << horizontal_line << std::endl;
+    _mutex.unlock();
+}

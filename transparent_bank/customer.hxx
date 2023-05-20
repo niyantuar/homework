@@ -2,6 +2,9 @@
 #define CUSTOMER_HXX
 #include <cstdint>
 #include <stdexcept>
+#include <iostream>
+#include <iomanip>
+
 
 class CustomerFrozenException: public std::logic_error {
   public:
@@ -34,6 +37,7 @@ class Customer {
 
     void set_minimum_allowed(balance_t minimum_allowed);
     void set_maximum_allowed(balance_t maximum_allowed);
+    void print_status() const;
 
   private:
     bool _is_balance_valid(balance_t balance) const noexcept;

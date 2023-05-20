@@ -42,6 +42,7 @@ int client(char** argv) {
     const std::string SET_MAXIMUM_ALLOWED{"set_maximum_allowed"};
 
     while (true) {
+        bank.print();
         std::string command;
         std::cin >> command;
         if (command == FREEZE) {
